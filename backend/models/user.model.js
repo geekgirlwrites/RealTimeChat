@@ -14,9 +14,13 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
         minlength: 6
+    },
+    onlineStatus: {
+        type: String,
+        enum: ['AVAILABLE', 'BUSY'],
+        default: 'AVAILABLE'
     }
-    // created at
-    // updated at
+    
 }, { timestamps: true })
 
 const User = mongoose.model("User", userSchema)
