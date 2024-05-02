@@ -57,38 +57,32 @@ const sendMessage = async (req, res) => {
 
         await Promise.all([newMessage.save(), conversation.save()])
 
-        // SOCKET IO functionality
 		const receiverSocketId = getReceiverSocketId(receiverId);
 		if (receiverSocketId) {
 			io.to(receiverSocketId).emit("newMessage", newMessage);
+        }
+
+        const senderSocketId = getReceiverSocketId(senderId);
+        if(senderSocketId){
+            io.to(senderSocketId).emit("newMessage", newMessage);
         }
     
         const receiver = await User.findById(receiverId);
         
         if (receiver.status === 'BUSY') {
             try {
-                //SOCKET IO functionality
-                const receiverSocketId = getReceiverSocketId(senderId);
-                const senderSocketId = getReceiverSocketId(receiverId);
-                if (receiverSocketId) {
-                    io.to(receiverSocketId).emit("newMessage", newMessage);
-		        }
                 
                 const LLMresponse = await generateAutoReply(message);
                 const busyMessage = await createSimulatedMessage(receiverId, senderId, LLMresponse); //switched sender and reciever id
-            
-                if (receiverSocketId) {
-                    io.to(receiverSocketId).emit("newMessage", newMessage);
+
+                 if (senderSocketId) {
+                    io.to(senderSocketId).emit("newMessage", newMessage);
 		        }
-                if (senderSocketId) {
-                    io.to(senderSocketId).emit("busyMessage", busyMessage);
-		        }
+
+                console.log(senderSocketId);
                 
                 return res.status(200).json(busyMessage);
             } catch (error) {
-                if (receiverSocketId) {
-                    io.to(receiverSocketId).emit("newMessage", newMessage);
-		        }
                 console.log("Error inside google thing message: ", error.message);
                 return res.status(200).json({ message: "User not available" });
             }
@@ -150,12 +144,16 @@ async function createSimulatedMessage(senderId, receiverId, text) {
     }
 
     conversation.messages.push(newMessage._id);
-    await conversation.save();
-
     const receiverSocketId = getReceiverSocketId(receiverId);
-		if (receiverSocketId) {
-			io.to(receiverSocketId).emit("newMessage", newMessage);
-        }
+    if (receiverSocketId) {
+        io.to(receiverSocketId).emit("newMessage", newMessage);
+    }
+    const senderSocketId = getReceiverSocketId(senderId);
+    if(senderSocketId){
+        io.to(senderSocketId).emit("newMessage", newMessage);
+    }
+
+    await conversation.save();
 
     return newMessage;
 }
