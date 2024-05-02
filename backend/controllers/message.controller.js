@@ -74,11 +74,8 @@ const sendMessage = async (req, res) => {
                     io.to(receiverSocketId).emit("newMessage", newMessage);
 		        }
                 
-                const LLMresponse = await generateAutoReply(message, res);
-                console.log(LLMresponse);
+                const LLMresponse = await generateAutoReply(message);
                 const busyMessage = await createSimulatedMessage(receiverId, senderId, LLMresponse); //switched sender and reciever id
-                console.log(busyMessage);
-
             
                 if (receiverSocketId) {
                     io.to(receiverSocketId).emit("newMessage", newMessage);
@@ -104,11 +101,10 @@ const sendMessage = async (req, res) => {
 const client = new DiscussServiceClient({ authClient: new GoogleAuth().fromAPIKey(API_KEY), });
 
 
-async function generateAutoReply(prompt, res) {
+async function generateAutoReply(prompt) {
     const timeout = 10000; // 10 seconds in milliseconds
 
     try {
-        // Promise for the LLM response
         const llmPromise = client.generateMessage({
             model: MODEL_NAME,
             prompt: {
@@ -116,30 +112,21 @@ async function generateAutoReply(prompt, res) {
             },
         });
 
-        // Promise for the timeout
-        const timeoutPromise = new Promise((resolve, reject) => {
-            setTimeout(() => reject(new Error('LLM response timed out')), timeout);
+        const timeoutPromise = new Promise((resolve) => {
+            setTimeout(() => resolve(null), timeout);
         });
 
-        // Use Promise.race to wait for the first to resolve/reject
         const result = await Promise.race([llmPromise, timeoutPromise]);
 
-        if (result instanceof Error) {
+        if (!result) {
             console.error('LLM response timed out after 10 seconds');
-            throw new Error('AbortError'); // Re-throw a generic error
+            return "User not available";
         }
 
         console.log(result[0]);
         return result[0].candidates[0].content;
     } catch (error) {
-        // Handle errors, including the case where the request was aborted
-        if (error.name === 'AbortError') {
-            console.log('Request aborted');
-            return ""
-        } else {
-            console.error('Error in generateAutoReply:', error.message);
-            return res.status(200).json({ message: 'User unavaible' });
-        }
+        console.error('Error in generateAutoReply:', error.message);
     }
 }
 
@@ -151,8 +138,7 @@ async function createSimulatedMessage(senderId, receiverId, text) {
         message: text
     });
     await newMessage.save();
-
-    // Add this message to an existing or new conversation
+    
     let conversation = await Conversation.findOne({
         participants: { $all: [senderId, receiverId] }
     });
