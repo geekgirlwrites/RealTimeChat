@@ -15,12 +15,12 @@ const userSchema = new mongoose.Schema({
         required: true,
         minlength: 6
     },
-    onlineStatus: {
+    status: {
         type: String,
-        enum: ['AVAILABLE', 'BUSY'],
-        default: 'AVAILABLE'
+        default: "BUSY"
     }
-    
+    // created at
+    // updated at
 }, { timestamps: true })
 
 const User = mongoose.model("User", userSchema)

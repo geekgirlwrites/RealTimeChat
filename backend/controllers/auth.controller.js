@@ -15,6 +15,7 @@ const loginUser = async (req, res) => {
 
         generateTokenAndSetCookie(user._id, res)
 
+        await User.findOneAndUpdate({ _id: user._id }, {status: "AVAILABLE" }, { new: true }) // set status to available
         res.status(200).json({
             _id: user._id,
             fullName: user.fullName,
@@ -27,10 +28,12 @@ const loginUser = async (req, res) => {
         return res.status(500).json({error: error})
     }
 }
-const logout = (req, res) => {
+const logout = async (req, res) => {
     try {
         res.cookie("jwt", "", { maxAge: 0 })
-        res.status(200).json({message: "Logged Out Successfully"})
+        const userId = req.user._id
+        await User.findOneAndUpdate({ _id: userId }, {status: "BUSY" }, { new: true }) // set status to busy
+        res.status(200).json({ message: "Logged Out Successfully" })
     } catch (error) {
         console.log("Error in logout controller: ", error)
         return res.status(500).json({error: error})
@@ -39,8 +42,10 @@ const logout = (req, res) => {
 const signup = async (req, res) => {
     console.log("signup")
     try {
-        const { fullName, email, password, confirmpassword } = req.body
-        if (password != confirmpassword) {
+        const { fullName, email, password, confirmPassword } = req.body
+        if (password !== confirmPassword) {
+            console.log(password)
+            console.log(confirmPassword)
             return res.status(400).json({error:"Passwords do not match"})
         }
         
