@@ -1,8 +1,3 @@
-# React + Vite
+1. A real time chat application built using Node Js, JavaScript, ReactJs, MongoDB and socket io that enables real time communication.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+2. Built with Google’s Palm API to send automatic and relevant response if the user has marked themselves as bus and they receive a message when busy. 
